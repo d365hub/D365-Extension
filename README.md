@@ -1,5 +1,5 @@
 # D365 Extension for Chrome, Edge and Firefox
-D365 browser extensions keeps you updated with the Microsoft Dynamics 365 and Power Platform by providing filtered feed based on the preference you have set.
+D365 browser extensions keeps you updated with the Microsoft Dynamics 365 and Power Platform by providing filtered feed based on the preferences you have set.
 
 ![d365 extension](https://d365hub.com/images/extensions/all.png "D365 extension")
 
