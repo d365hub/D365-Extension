@@ -7,7 +7,7 @@ D365 browser extensions keeps you updated with the Microsoft Dynamics 365 and Po
 ![preferences](https://d365hub.com/images/extensions/Preferences.png "Preferences")
 
 
-## Based on preferences feed gets filtered
+## Based on preferences your feed gets filtered
 ![filtered feed](https://d365hub.com/images/extensions/feed.png "Filtered feed")
 
 # How it works?
