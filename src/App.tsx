@@ -2,8 +2,62 @@ import About from './components/about/About';
 import './App.css';
 import Posts from './components/posts/Posts';
 import Categories from './components/categories/Categories';
+import { useEffect, useState } from 'react';
+import storage from './services/storage.service';
+import apiCategories from './services/api/api.categories';
+import { IPost } from './models/IPost';
+import apiPosts from './services/api/api.posts';
 
 function App() {
+  const [posts, setPosts] = useState<IPost[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [pageIndex, setPageIndex] = useState(1);
+  const [error, setError] = useState(null);
+  const categoriesKey = "categories";
+
+  useEffect(() => {
+    async function getData() {
+      try {
+
+        setLoading(true);
+
+        let data = await storage.get(categoriesKey);
+
+        if (!data?.categories) {
+          const categories = await apiCategories.getCategories();
+          const categoryIds = categories.map(c => c.id);
+          await storage.set({ categoriesKey: categoryIds });
+
+          data = data || {};
+          data.categories = categoryIds;
+        }
+
+        const response = await apiPosts.getPosts(pageIndex, data.categories);
+
+        setPosts([...posts, ...response]);
+
+        setLoading(false);
+
+        setError(null);
+
+
+      } catch (err) {
+        console.error(err);
+      }
+      finally {
+      }
+    }
+
+    getData();
+
+  }, [pageIndex]);
+
+  function onMore() {
+    setPageIndex(pageIndex => pageIndex + 1);
+    console.log(pageIndex);
+  }
+
+
   return (
     <div className='container pt-3'>
       <>
@@ -20,7 +74,7 @@ function App() {
         </ul>
         <div className="tab-content pt-2" id="myTabContent">
           <div className="tab-pane fade show active" id="home-tab-pane" role="tabpanel" aria-labelledby="home-tab" tabIndex={0}>
-            <Posts />
+            <Posts posts={posts} loading={loading} onMore={onMore} />
           </div>
           <div className="tab-pane fade" id="profile-tab-pane" role="tabpanel" aria-labelledby="profile-tab" tabIndex={0}>
             <Categories />

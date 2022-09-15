@@ -3,6 +3,7 @@ import { ICategory } from "../../models/ICategory";
 import * as _ from "lodash";
 import { IGroup } from "../../models/IGroup";
 import apiCategories from "../../services/api/api.categories";
+import storage from "../../services/storage.service";
 
 function Categories() {
     const categoriesKey = "categories";
@@ -18,44 +19,46 @@ function Categories() {
                 setLoading(true);
 
                 const tempSelectedCategories: string[] = [];
+
                 //Load existing selected categories
-                chrome.storage.local.get(categoriesKey, async (storedData) => {
+                const storedData = await storage.get(categoriesKey);
 
-                    if (storedData?.categories) {
-                        tempSelectedCategories.push(...storedData.categories);
+                console.log('stored Service', storedData);
+
+                if (storedData?.categories) {
+                    tempSelectedCategories.push(...storedData.categories);
+                }
+
+                //Load selected categories in memory 
+                setSelectedCategories(tempSelectedCategories);
+
+                //Load all categories from remote
+                const categories = await apiCategories.getCategories();
+
+                //Mark selected categories in all categories
+                categories.map(c => c.isSelected = tempSelectedCategories.includes(c.id));
+
+                //Load all marked selected categories in memory
+                setCategories(categories);
+
+                const grouped = _.groupBy(categories, category => category.group.title);
+
+                console.log(grouped);
+
+                const groupedCategories: IGroup[] = [];
+
+                Object.entries(grouped).map(([key, categories]) => {
+                    const group: IGroup = {
+                        id: "",
+                        title: key,
+                        categories: categories
                     }
-
-                    //Load selected categories in memory 
-                    setSelectedCategories(tempSelectedCategories);
-
-                    //Load all categories from remote
-                    const categories = await apiCategories.getCategories();
-
-                    //Mark selected categories in all categories
-                    categories.map(c => c.isSelected = tempSelectedCategories.includes(c.id));
-
-                    //Load all marked selected categories in memory
-                    setCategories(categories);
-
-                    const grouped = _.groupBy(categories, category => category.group.title);
-
-                    console.log(grouped);
-
-                    const groupedCategories: IGroup[] = [];
-
-                    Object.entries(grouped).map(([key, categories]) => {
-                        const group: IGroup = {
-                            id: "",
-                            title: key,
-                            categories: categories
-                        }
-                        groupedCategories.push(group);
-                    });
-
-                    setGroupedCategories(groupedCategories);
-
-                    setError(null);
+                    groupedCategories.push(group);
                 });
+
+                setGroupedCategories(groupedCategories);
+
+                setError(null);
 
 
             } catch (err) {
@@ -95,7 +98,7 @@ function Categories() {
 
         setSelectedCategories(tempSelectedCategories);
 
-        await storeSelectedCategories(tempSelectedCategories);
+        await saveSelectedCategories(tempSelectedCategories);
     }
 
     async function removeCategoryIdFromSelectedCategoryIds(categoryId: string) {
@@ -106,11 +109,11 @@ function Categories() {
 
         setSelectedCategories(tempSelectedCategories);
 
-        await storeSelectedCategories(tempSelectedCategories);
+        await saveSelectedCategories(tempSelectedCategories);
     }
 
-    async function storeSelectedCategories(tempSelectedCategories: string[]) {
-        await chrome.storage.local.set({ "categories": tempSelectedCategories });
+    async function saveSelectedCategories(tempSelectedCategories: string[]) {
+        await storage.set({ "categories": tempSelectedCategories });
     }
 
     return (
