@@ -4,10 +4,11 @@ import * as _ from "lodash";
 import { IGroup } from "../../models/IGroup";
 import apiCategories from "../../services/api/api.categories";
 import storage from "../../services/storage.service";
+import Category from "./Category";
 
-function Categories() {
+function Categories(props: { categories: ICategory[], handleOnChange: Function }) {
+    const { categories, handleOnChange } = props;
     const categoriesKey = "categories";
-    const [categories, setCategories] = useState<ICategory[]>([]);
     const [groupedCategories, setGroupedCategories] = useState<IGroup[]>([]);
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
@@ -18,28 +19,26 @@ function Categories() {
             try {
                 setLoading(true);
 
-                const tempSelectedCategories: string[] = [];
+                // const tempSelectedCategories: string[] = [];
 
-                //Load existing selected categories
-                const storedData = await storage.get(categoriesKey);
+                // //Load existing selected categories
+                // const storedData = await storage.get(categoriesKey);
 
-                console.log('stored Service', storedData);
+                // if (storedData?.categories) {
+                //     tempSelectedCategories.push(...storedData.categories);
+                // }
 
-                if (storedData?.categories) {
-                    tempSelectedCategories.push(...storedData.categories);
-                }
-
-                //Load selected categories in memory 
-                setSelectedCategories(tempSelectedCategories);
+                // //Load selected categories in memory 
+                // setSelectedCategories(tempSelectedCategories);
 
                 //Load all categories from remote
-                const categories = await apiCategories.getCategories();
+                //const categories = await apiCategories.getCategories();
 
                 //Mark selected categories in all categories
-                categories.map(c => c.isSelected = tempSelectedCategories.includes(c.id));
+                //categories.map(c => c.isSelected = tempSelectedCategories.includes(c.id));
 
                 //Load all marked selected categories in memory
-                setCategories(categories);
+                //setCategories(categories);
 
                 const grouped = _.groupBy(categories, category => category.group.title);
 
@@ -73,24 +72,26 @@ function Categories() {
         }
 
         getData();
-    }, [])
+    }, [categories])
 
-    const handleOnChange = async (categoryId: string, isSelected: boolean) => {
+    // const handleOnChange = async (categoryId: string, isSelected: boolean) => {
 
-        const selectedCategory = categories.find(c => c.id === categoryId);
+    //     console.log(categoryId, isSelected);
 
-        if (selectedCategory) {
-            selectedCategory.isSelected = isSelected;
-            setCategories(categories);
+    //     // const selectedCategory = categories.find(c => c.id === categoryId);
 
-            if (isSelected) {
-                await addCategoryIdToSelectedCategoryIds(categoryId);
-            } else {
-                await removeCategoryIdFromSelectedCategoryIds(categoryId);
-            }
+    //     // if (selectedCategory) {
+    //     //     selectedCategory.isSelected = isSelected;
+    //     //     //setCategories(categories);
 
-        }
-    }
+    //     //     if (isSelected) {
+    //     //         await addCategoryIdToSelectedCategoryIds(categoryId);
+    //     //     } else {
+    //     //         await removeCategoryIdFromSelectedCategoryIds(categoryId);
+    //     //     }
+
+    //     // }
+    // }
 
     async function addCategoryIdToSelectedCategoryIds(categoryId: string) {
 
@@ -131,10 +132,6 @@ function Categories() {
                 }
             </div>}
 
-            {error && (
-                <div>{`There is a problem fetching the categories - ${error}`}</div>
-            )}
-
             <>
                 {
                     groupedCategories.map(gc => {
@@ -144,13 +141,7 @@ function Categories() {
                             <ul className="list-group" >
                                 {
                                     _.sortBy(gc.categories, x => x.title).map((category, index) =>
-                                        <li className="list-group-item d-flex justify-content-between" key={index}>
-                                            <div>
-                                                <img src={category.iconUrl} className="rounded me-2" alt="" width={32} />
-                                                <label className="form-check-label" >{category.title}</label>
-                                            </div>
-                                            <input title="category" className="form-check-input me-1" type="checkbox" checked={category.isSelected} onChange={() => handleOnChange(category.id, !category.isSelected)} />
-                                        </li>
+                                        <Category id={category.id} title={category.title} isSelected={category.isSelected} iconUrl={category.iconUrl} onChange={handleOnChange} key={index} />
                                     )
                                 }
                             </ul>
