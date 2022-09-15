@@ -19,7 +19,7 @@ function Posts(props: any) {
                 ))
             }
 
-            {posts.length > 0 &&
+            {!loading &&
                 <div className="d-grid gap-2 mb-2">
                     <button className="btn btn-sm btn-outline-primary" onClick={onMore}>more...</button>
                 </div>
