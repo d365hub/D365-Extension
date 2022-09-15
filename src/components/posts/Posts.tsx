@@ -11,6 +11,7 @@ function Posts() {
     const [posts, setPosts] = useState<IPost[]>([]);
     const [loading, setLoading] = useState(false);
     const [pageIndex, setPageIndex] = useState(1);
+    const categoriesKey = "categories";
 
     useEffect(() => {
 
@@ -18,7 +19,7 @@ function Posts() {
 
             setLoading(true);
 
-            let categoriesData = await storage.get('categories');
+            let categoriesData = await storage.get(categoriesKey);
 
             console.log('categoriesData', categoriesData);
 
@@ -26,11 +27,18 @@ function Posts() {
 
             if (categories.length === 0) {
                 categories = await apiCategories.getCategories();
+                categories.map(c => c.isSelected = true);
+
+                await storage.set({ "categories": categories });
+
+                categoriesData = await storage.get(categoriesKey);
+
+                console.log('categoriesData', categoriesData);
             }
 
-            const categoryIds = categories.map(c => c.id);
+            const selectedCategoryIds = categories.filter(c => c.isSelected).map(c => c.id);
 
-            const response = await apiPosts.getPosts(pageIndex, categoryIds);
+            const response = await apiPosts.getPosts(pageIndex, selectedCategoryIds);
 
             setPosts([...posts, ...response]);
 
