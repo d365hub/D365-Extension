@@ -6,115 +6,84 @@ import apiCategories from "../../services/api/api.categories";
 import storage from "../../services/storage.service";
 import Category from "./Category";
 
-function Categories(props: { categories: ICategory[], handleOnChange: Function }) {
-    const { categories, handleOnChange } = props;
+function Categories() {
     const categoriesKey = "categories";
+    const [categories, setCategories] = useState<ICategory[]>([]);
     const [groupedCategories, setGroupedCategories] = useState<IGroup[]>([]);
-    const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
 
+    //First load
     useEffect(() => {
+        async function loadCategories() {
+
+            setLoading(true);
+
+            const categoriesData = await storage.get(categoriesKey);
+
+            let localCategories: ICategory[] = categoriesData.categories || [];
+
+            //Fetch all remote categories
+            const allCategories = await apiCategories.getCategories();
+
+            //Mark category selected in remote categories
+            allCategories.map(r => {
+                r.isSelected = localCategories.filter(c => c.isSelected).some(c => c.id === r.id)
+            })
+
+            setCategories(allCategories);
+
+            setLoading(false);
+
+        }
+
+        loadCategories();
+
+    }, [])
+
+
+    //On categories update
+    useEffect(() => {
+
+        console.log('Category change effect')
+
         async function getData() {
-            try {
-                setLoading(true);
+            const grouped = _.groupBy(categories, category => category.group.title);
 
-                // const tempSelectedCategories: string[] = [];
+            const groupedCategories: IGroup[] = [];
 
-                // //Load existing selected categories
-                // const storedData = await storage.get(categoriesKey);
+            Object.entries(grouped).map(([key, categories]) => {
+                const group: IGroup = {
+                    id: key,
+                    title: key,
+                    categories: categories
+                }
+                groupedCategories.push(group);
+            });
 
-                // if (storedData?.categories) {
-                //     tempSelectedCategories.push(...storedData.categories);
-                // }
-
-                // //Load selected categories in memory 
-                // setSelectedCategories(tempSelectedCategories);
-
-                //Load all categories from remote
-                //const categories = await apiCategories.getCategories();
-
-                //Mark selected categories in all categories
-                //categories.map(c => c.isSelected = tempSelectedCategories.includes(c.id));
-
-                //Load all marked selected categories in memory
-                //setCategories(categories);
-
-                const grouped = _.groupBy(categories, category => category.group.title);
-
-                console.log(grouped);
-
-                const groupedCategories: IGroup[] = [];
-
-                Object.entries(grouped).map(([key, categories]) => {
-                    const group: IGroup = {
-                        id: "",
-                        title: key,
-                        categories: categories
-                    }
-                    groupedCategories.push(group);
-                });
-
-                setGroupedCategories(groupedCategories);
-
-                setError(null);
-
-
-            } catch (err) {
-
-                console.error(err);
-
-            } finally {
-
-                setLoading(false);
-
-            }
+            setGroupedCategories(groupedCategories);
         }
 
         getData();
     }, [categories])
 
-    // const handleOnChange = async (categoryId: string, isSelected: boolean) => {
 
-    //     console.log(categoryId, isSelected);
+    //Hnadle category selection
+    const handleOnChange = async (categoryId: string, isSelected: boolean) => {
 
-    //     // const selectedCategory = categories.find(c => c.id === categoryId);
+        console.log(categoryId, isSelected);
 
-    //     // if (selectedCategory) {
-    //     //     selectedCategory.isSelected = isSelected;
-    //     //     //setCategories(categories);
+        console.log('categories', categories);
 
-    //     //     if (isSelected) {
-    //     //         await addCategoryIdToSelectedCategoryIds(categoryId);
-    //     //     } else {
-    //     //         await removeCategoryIdFromSelectedCategoryIds(categoryId);
-    //     //     }
+        var category = categories.find(c => c.id == categoryId);
+        if (category) {
+            category.isSelected = isSelected
+        }
 
-    //     // }
-    // }
+        const newCategories = [...categories]
 
-    async function addCategoryIdToSelectedCategoryIds(categoryId: string) {
+        setCategories(newCategories);
 
-        var tempSelectedCategories = [...selectedCategories, categoryId];
-
-        setSelectedCategories(tempSelectedCategories);
-
-        await saveSelectedCategories(tempSelectedCategories);
-    }
-
-    async function removeCategoryIdFromSelectedCategoryIds(categoryId: string) {
-
-        var tempSelectedCategories = [...selectedCategories];
-
-        tempSelectedCategories.splice(tempSelectedCategories.indexOf(categoryId), 1);
-
-        setSelectedCategories(tempSelectedCategories);
-
-        await saveSelectedCategories(tempSelectedCategories);
-    }
-
-    async function saveSelectedCategories(tempSelectedCategories: string[]) {
-        await storage.set({ "categories": tempSelectedCategories });
+        await storage.set({ 'categories': newCategories });
     }
 
     return (
@@ -141,7 +110,9 @@ function Categories(props: { categories: ICategory[], handleOnChange: Function }
                             <ul className="list-group" >
                                 {
                                     _.sortBy(gc.categories, x => x.title).map((category, index) =>
-                                        <Category id={category.id} title={category.title} isSelected={category.isSelected} iconUrl={category.iconUrl} onChange={handleOnChange} key={index} />
+                                        <Category id={category.id} title={category.title} isSelected={category.isSelected} iconUrl={category.iconUrl} onChange={() => {
+                                            handleOnChange(category.id, !category.isSelected);
+                                        }} key={index} />
                                     )
                                 }
                             </ul>
