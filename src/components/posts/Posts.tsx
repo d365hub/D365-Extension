@@ -1,9 +1,46 @@
 import Post from "../post/post";
 import { IPost } from "../../models/IPost";
 import CardPlaceholder from "../cardPlaceholder/CardPlaceholder";
+import { useEffect, useState } from "react";
+import storage from "../../services/storage.service";
+import apiCategories from "../../services/api/api.categories";
+import { ICategory } from "../../models/ICategory";
+import apiPosts from "../../services/api/api.posts";
 
-function Posts(props: any) {
-    const { posts, onMore, loading } = props;
+function Posts() {
+    const [posts, setPosts] = useState<IPost[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [pageIndex, setPageIndex] = useState(1);
+
+    useEffect(() => {
+
+        async function getData() {
+
+            setLoading(true);
+
+            let categoriesData = await storage.get('categories');
+
+            console.log('categoriesData', categoriesData);
+
+            let categories: ICategory[] = categoriesData.categories || [];
+
+            if (categories.length === 0) {
+                categories = await apiCategories.getCategories();
+            }
+
+            const categoryIds = categories.map(c => c.id);
+
+            const response = await apiPosts.getPosts(pageIndex, categoryIds);
+
+            setPosts([...posts, ...response]);
+
+            setLoading(false);
+
+        }
+
+        getData();
+
+    }, [pageIndex]);
 
     return (
         <>
@@ -21,7 +58,10 @@ function Posts(props: any) {
 
             {!loading &&
                 <div className="d-grid gap-2 mb-2">
-                    <button className="btn btn-sm btn-outline-primary" onClick={onMore}>more...</button>
+                    <button className="btn btn-sm btn-outline-primary" onClick={() => {
+                        setLoading(true);
+                        setPageIndex(pageIndex + 1);
+                    }}>more...</button>
                 </div>
             }
         </>
