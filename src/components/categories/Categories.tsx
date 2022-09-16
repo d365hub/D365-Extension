@@ -20,7 +20,7 @@ function Categories() {
 
             const categoriesData = await storage.get(categoriesKey);
 
-            let localCategories: ICategory[] = categoriesData.categories || [];
+            let localCategories: ICategory[] = categoriesData?.categories || [];
 
             //Fetch all remote categories
             const allCategories = await apiCategories.getCategories();
@@ -43,8 +43,6 @@ function Categories() {
 
     //On categories update
     useEffect(() => {
-
-        console.log('Category change effect')
 
         async function getData() {
             const grouped = _.groupBy(categories, category => category.group.title);
@@ -70,10 +68,6 @@ function Categories() {
     //Hnadle category selection
     const handleOnChange = async (categoryId: string, isSelected: boolean) => {
 
-        console.log(categoryId, isSelected);
-
-        console.log('categories', categories);
-
         var category = categories.find(c => c.id == categoryId);
         if (category) {
             category.isSelected = isSelected
@@ -83,7 +77,7 @@ function Categories() {
 
         setCategories(newCategories);
 
-        await storage.set({ 'categories': newCategories });
+        await storage.set('categories', newCategories);
     }
 
     return (
@@ -91,8 +85,8 @@ function Categories() {
 
             {loading && <div>
                 {
-                    Array.from({ length: 10 }).map(x => {
-                        return <p className="card-text placeholder-glow mb-2">
+                    Array.from({ length: 10 }).map((x, index) => {
+                        return <p key={index} className="card-text placeholder-glow mb-2">
                             <span className="placeholder col-1"></span>
                             <span className="col-1"></span>
                             <span className="placeholder col-10"></span>
@@ -104,15 +98,15 @@ function Categories() {
             <>
                 {
                     groupedCategories.map(gc => {
-                        return <div className="mb-2">
+                        return <div key={gc.id} className="mb-2">
                             <h5 className="text-muted">{gc.title}</h5>
 
                             <ul className="list-group" >
                                 {
                                     _.sortBy(gc.categories, x => x.title).map((category, index) =>
-                                        <Category id={category.id} title={category.title} isSelected={category.isSelected} iconUrl={category.iconUrl} onChange={() => {
+                                        <Category key={category.id} id={category.id} title={category.title} isSelected={category.isSelected} iconUrl={category.iconUrl} onChange={() => {
                                             handleOnChange(category.id, !category.isSelected);
-                                        }} key={index} />
+                                        }} />
                                     )
                                 }
                             </ul>

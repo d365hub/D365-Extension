@@ -1,13 +1,12 @@
-class StorageService {
+import ChromeStorage from "./chromeStorage.service";
+import LocalStorage from "./localStorage.Service";
 
-    get(key: string) {
-        return chrome.storage.local.get(key);
-    }
+export interface StorageService {
 
-    set(data: any) {
-        return chrome.storage.local.set(data);
-    }
+    get(key: string): any;
+
+    set(key: string, data: any): void
 }
 
-const storage = new StorageService();
+const storage = new LocalStorage();
 export default storage;

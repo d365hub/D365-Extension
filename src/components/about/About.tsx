@@ -1,5 +1,5 @@
 function About() {
-    const version = chrome.runtime.getManifest().version;
+    const version = chrome?.runtime?.getManifest().version;
 
     return (
         <div>

@@ -21,19 +21,18 @@ function Posts() {
 
             let categoriesData = await storage.get(categoriesKey);
 
-            console.log('categoriesData', categoriesData);
+            let categories: ICategory[] = categoriesData?.categories || [];
 
-            let categories: ICategory[] = categoriesData.categories || [];
+            console.log(categories);
 
             if (categories.length === 0) {
                 categories = await apiCategories.getCategories();
                 categories.map(c => c.isSelected = true);
 
-                await storage.set({ "categories": categories });
+                await storage.set("categories", categories);
 
                 categoriesData = await storage.get(categoriesKey);
 
-                console.log('categoriesData', categoriesData);
             }
 
             const selectedCategoryIds = categories.filter(c => c.isSelected).map(c => c.id);
@@ -59,8 +58,8 @@ function Posts() {
             </div>}
 
             {posts &&
-                posts.map((post: IPost) => (
-                    <Post id={post.id} title={post.title} image={post.image} date={post.date} slugTitle={post.slugTitle} blog={post.blog} />
+                posts.map((post: IPost, index) => (
+                    <Post key={index} id={post.id} title={post.title} image={post.image} date={post.date} slugTitle={post.slugTitle} blog={post.blog} />
                 ))
             }
 
